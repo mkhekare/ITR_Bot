@@ -4,19 +4,29 @@ from flask_login import LoginManager, current_user, login_user, logout_user, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from utils.document_processor import process_uploaded_file
+from utils.tax_calculator import calculate_tax
 import os
 from config import Config
 from datetime import datetime
 import google.generativeai as genai
 
+# Initialize Flask application
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# Database setup
 db = SQLAlchemy(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
 
-# Initialize Gemini
+# Authentication setup
+login_manager = LoginManager(app)
+login_manager.login_view = 'auth.login'
+
+# Configure upload folder
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Initialize Gemini AI
 genai.configure(api_key=app.config['GEMINI_API_KEY'])
 model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -36,24 +46,18 @@ class TaxProfile(db.Model):
     pan_number = db.Column(db.String(10))
     financial_year = db.Column(db.String(9))
     regime = db.Column(db.String(20))
-    # Add other tax-related fields
+    # Add other tax-related fields as needed
 
 class GSTProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     gstin = db.Column(db.String(15))
     business_name = db.Column(db.String(100))
-    # Add other GST-related fields
+    # Add other GST-related fields as needed
 
-# Configure upload folder
-UPLOAD_FOLDER = 'uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# Allowed file extensions
-ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'txt'}
-
+# Helper functions
 def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'txt'}
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -61,81 +65,79 @@ def allowed_file(filename):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# app.py
+# Routes
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
     return render_template('dashboard.html')
 
 @app.route('/calculator')
+@login_required
 def calculator():
-    return render_template('calculator.html')  # Not calculator/step1.html
+    return render_template('calculator.html')
 
 @app.route('/upload', methods=['GET', 'POST'])
+@login_required
 def upload():
     if request.method == 'POST':
-        # Handle file upload
-        pass
+        if 'files' not in request.files:
+            flash('No files selected', 'danger')
+            return redirect(request.url)
+        
+        files = request.files.getlist('files')
+        if not files or all(file.filename == '' for file in files):
+            flash('No files selected', 'danger')
+            return redirect(request.url)
+            
+        return redirect(url_for('analyze_documents'))
+    
     return render_template('upload.html')
 
 @app.route('/results')
+@login_required
 def results():
+    # This should typically be accessed after document analysis
     return render_template('results.html')
 
 @app.route('/faq')
 def faq():
     return render_template('faq.html')
 
-# Add these routes to your existing app.py
+# Feature-specific routes
 @app.route('/gst')
-def gst():
-    return render_template('gst.html')
+@login_required
+def gst_dashboard():
+    return render_template('gst/dashboard.html')
 
 @app.route('/investments')
-def investments():
-    return render_template('investments.html')
+@login_required
+def investments_dashboard():
+    return render_template('investments/dashboard.html')
 
-@app.route('/resources')
-def resources():
+@app.route('/business')
+@login_required
+def business_dashboard():
+    return render_template('business/dashboard.html')
+
+@app.route('/advisory')
+@login_required
+def advisory_resources():
     return render_template('advisory/resources.html')
 
 @app.route('/blog')
 def blog():
     return render_template('blog.html')
 
-@app.route('/advisory')
-def advisory():
-    return render_template('advisory.html')
-
-# GST Routes
-@app.route('/gst')
-@login_required
-def gst_dashboard():
-    return render_template('gst/dashboard.html')
-
-# Investments Routes
-@app.route('/investments')
-@login_required
-def investments_dashboard():
-    return render_template('investments/dashboard.html')
-
-# Business Solutions Routes
-@app.route('/business')
-@login_required
-def business_dashboard():
-    return render_template('business/dashboard.html')
-
-# Advisory Routes
-@app.route('/advisory')
-def advisory_resources():
-    return render_template('advisory/resources.html')
-
-# Auth Routes
+# Authentication routes
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -143,13 +145,17 @@ def login():
         
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
-            return redirect(url_for('dashboard'))
-        else:
-            flash('Invalid email or password', 'danger')
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('dashboard'))
+        flash('Invalid email or password', 'danger')
+    
     return render_template('auth/login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
     if request.method == 'POST':
         email = request.form.get('email')
         name = request.form.get('name')
@@ -166,10 +172,20 @@ def register():
             db.session.add(user)
             db.session.commit()
             login_user(user)
+            flash('Registration successful!', 'success')
             return redirect(url_for('dashboard'))
+    
     return render_template('auth/register.html')
 
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+# Document processing and analysis
 @app.route('/analyze', methods=['POST'])
+@login_required
 def analyze_documents():
     if 'files' not in request.files:
         flash('No files uploaded', 'danger')
@@ -179,6 +195,10 @@ def analyze_documents():
     financial_year = request.form.get('financial_year')
     age_group = request.form.get('age_group')
     
+    if not files or all(file.filename == '' for file in files):
+        flash('No files selected', 'danger')
+        return redirect(url_for('upload'))
+    
     extracted_data = {
         'salary_components': {},
         'other_income': {},
@@ -187,65 +207,86 @@ def analyze_documents():
     }
     
     for file in files:
-        if file.filename == '':
-            continue
-            
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             
-            # Process each file
-            result = process_uploaded_file(filepath)
-            extracted_data['documents'].append({
-                'filename': filename,
-                'content': result['content'][:1000] + "..." if len(result['content']) > 1000 else result['content'],
-                'summary': result['summary']
-            })
-            
-            # Aggregate data
-            if 'salary_components' in result:
-                extracted_data['salary_components'].update(result['salary_components'])
-            if 'other_income' in result:
-                extracted_data['other_income'].update(result['other_income'])
-            if 'deductions' in result:
-                extracted_data['deductions'].update(result['deductions'])
+            try:
+                result = process_uploaded_file(filepath)
+                extracted_data['documents'].append({
+                    'filename': filename,
+                    'content': result['content'][:1000] + "..." if len(result['content']) > 1000 else result['content'],
+                    'summary': result['summary']
+                })
+                
+                # Aggregate data
+                if 'salary_components' in result:
+                    extracted_data['salary_components'].update(result['salary_components'])
+                if 'other_income' in result:
+                    extracted_data['other_income'].update(result['other_income'])
+                if 'deductions' in result:
+                    extracted_data['deductions'].update(result['deductions'])
+                    
+            except Exception as e:
+                app.logger.error(f"Error processing file {filename}: {str(e)}")
+                flash(f'Error processing {filename}', 'danger')
+                continue
     
-    # Calculate tax
-    tax_results = calculate_tax(
-        salary_components=extracted_data['salary_components'],
-        other_income=extracted_data['other_income'],
-        deductions=extracted_data['deductions'],
-        age_group=age_group,
-        financial_year=financial_year
-    )
+    if not extracted_data['documents']:
+        flash('No valid documents were processed', 'danger')
+        return redirect(url_for('upload'))
+    
+    try:
+        tax_results = calculate_tax(
+            salary_components=extracted_data['salary_components'],
+            other_income=extracted_data['other_income'],
+            deductions=extracted_data['deductions'],
+            age_group=age_group,
+            financial_year=financial_year
+        )
+    except Exception as e:
+        app.logger.error(f"Tax calculation error: {str(e)}")
+        flash('Error calculating tax results', 'danger')
+        return redirect(url_for('upload'))
     
     return render_template('results.html', 
-                         extracted_data=extracted_data,
-                         tax_results=tax_results)
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('index'))
+                        extracted_data=extracted_data,
+                        tax_results=tax_results)
 
 # AI Assistant Endpoint
 @app.route('/ask_gemini', methods=['POST'])
+@login_required
 def ask_gemini():
-    user_question = request.form.get('question')
-    context = request.form.get('context', '')
+    user_question = request.form.get('question', '').strip()
+    context = request.form.get('context', '').strip()
     
-    prompt = f"""As a professional tax advisor, provide accurate and helpful information about:
-    {context}
-    Question: {user_question}
+    if not user_question:
+        return "Please provide a question", 400
     
-    Answer concisely with relevant tax sections when applicable."""
-    
-    response = model.generate_content(prompt)
-    return response.text
+    try:
+        prompt = f"""As a professional tax advisor, provide accurate and helpful information about:
+        {context}
+        Question: {user_question}
+        
+        Answer concisely with relevant tax sections when applicable."""
+        
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        app.logger.error(f"Gemini API error: {str(e)}")
+        return "Sorry, there was an error processing your request", 500
+
+# Error handlers
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('errors/404.html'), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('errors/500.html'), 500
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    app.run(debug=app.config['DEBUG'])
