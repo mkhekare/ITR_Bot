@@ -8,18 +8,22 @@ from config import Config
 from datetime import datetime
 import google.generativeai as genai
 
+# Initialize Flask app
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# Database setup
 db = SQLAlchemy(app)
+
+# Authentication setup
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# Initialize Gemini
+# Initialize Gemini AI
 genai.configure(api_key=app.config['GEMINI_API_KEY'])
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Models
+# Database Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -35,20 +39,22 @@ class TaxProfile(db.Model):
     pan_number = db.Column(db.String(10))
     financial_year = db.Column(db.String(9))
     regime = db.Column(db.String(20))
-    # Add other tax-related fields
 
 class GSTProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     gstin = db.Column(db.String(15))
     business_name = db.Column(db.String(100))
-    # Add other GST-related fields
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Routes
+# Helper Functions
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+# Main Routes
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -58,56 +64,67 @@ def index():
 def dashboard():
     return render_template('dashboard.html')
 
-# Add this with your other routes
+# Document Handling Routes
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload():
     if request.method == 'POST':
-        # Handle file upload logic here
-        flash('Files uploaded successfully', 'success')
+        if 'file' not in request.files:
+            flash('No file selected', 'danger')
+            return redirect(request.url)
+        
+        files = request.files.getlist('file')
+        for file in files:
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                # Save file and process (implementation needed)
+                flash(f'File {filename} uploaded successfully', 'success')
+            else:
+                flash('Invalid file type', 'danger')
         return redirect(url_for('dashboard'))
     return render_template('upload.html')
 
-# Tax Calculator Routes
+# Tax Services Routes
 @app.route('/calculator', methods=['GET', 'POST'])
 @login_required
 def calculator():
     if request.method == 'POST':
         # Process calculator form data
-        pass
-    return render_template('calculator/step1.html')
+        return redirect(url_for('results'))
+    return render_template('calculator.html')
+
+@app.route('/results')
+@login_required
+def results():
+    return render_template('results.html')
 
 # GST Routes
 @app.route('/gst')
 @login_required
-def gst_dashboard():
-    return render_template('gst/dashboard.html')
-
-# Add this with your other routes (around line 54 where your other routes are)
-@app.route('/faq')
-def faq():
-    return render_template('faq.html')
+def gst():
+    return render_template('gst.html')
 
 # Investments Routes
 @app.route('/investments')
 @login_required
-def investments_dashboard():
-    return render_template('investments/dashboard.html')
+def investments():
+    return render_template('investments.html')
 
-# Business Solutions Routes
-@app.route('/business')
-@login_required
-def business_dashboard():
-    return render_template('business/dashboard.html')
+# Information Routes
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
 
-# Advisory Routes
 @app.route('/advisory')
-def advisory_resources():
+def advisory():
     return render_template('advisory/resources.html')
 
-# Auth Routes
+# Authentication Routes
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -116,12 +133,14 @@ def login():
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
             return redirect(url_for('dashboard'))
-        else:
-            flash('Invalid email or password', 'danger')
+        flash('Invalid email or password', 'danger')
     return render_template('auth/login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+        
     if request.method == 'POST':
         email = request.form.get('email')
         name = request.form.get('name')
@@ -147,22 +166,39 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-# AI Assistant Endpoint
+# AI Assistant Route
 @app.route('/ask_gemini', methods=['POST'])
 def ask_gemini():
-    user_question = request.form.get('question')
-    context = request.form.get('context', '')
+    if not request.is_json:
+        return {"error": "Request must be JSON"}, 400
     
-    prompt = f"""As a professional tax advisor, provide accurate and helpful information about:
+    data = request.get_json()
+    user_question = data.get('question')
+    context = data.get('context', '')
+    
+    prompt = f"""As a professional tax advisor, provide accurate information about:
     {context}
     Question: {user_question}
+    Include relevant tax sections when applicable."""
     
-    Answer concisely with relevant tax sections when applicable."""
-    
-    response = model.generate_content(prompt)
-    return response.text
+    try:
+        response = model.generate_content(prompt)
+        return {"response": response.text}
+    except Exception as e:
+        return {"error": str(e)}, 500
+
+# Error Handlers
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    return render_template('500.html'), 500
+
+# Initialize Database
+with app.app_context():
+    db.create_all()
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
