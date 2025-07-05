@@ -10,6 +10,9 @@ RUN apt-get update && \
     libmagic1 && \
     rm -rf /var/lib/apt/lists/*
 
+# Create upload directory with proper permissions
+RUN mkdir -p /tmp/uploads && chmod 777 /tmp/uploads
+
 # Install Gunicorn explicitly
 RUN pip install gunicorn
 
@@ -31,6 +34,7 @@ EXPOSE 7860
 # Set environment variables
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
+ENV UPLOAD_FOLDER=/tmp/uploads  # Use /tmp for ephemeral storage
 
 # Run the application using Python module syntax
 CMD ["gunicorn", "--bind", "0.0.0.0:7860", "app:app"]
