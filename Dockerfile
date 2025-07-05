@@ -34,7 +34,8 @@ EXPOSE 7860
 # Set environment variables
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
-ENV UPLOAD_FOLDER=/tmp/uploads  # Use /tmp for ephemeral storage
-
+ENV UPLOAD_FOLDER=/tmp/uploads
+# Use /tmp for ephemeral storage
 # Run the application using Python module syntax
+
 CMD ["gunicorn", "--bind", "0.0.0.0:7860", "app:app"]
