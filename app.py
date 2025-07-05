@@ -32,24 +32,12 @@ def index():
         logger.error(f"Error rendering index: {str(e)}")
         return "Error loading home page", 500
 
-@app.route('/upload', methods=['GET', 'POST'])
-def upload():
-    if request.method == 'POST':
-        # Handle file upload
-        pass
-    return render_template('upload.html')
-
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'txt'}
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# Routes
-@app.route('/')
-def index():
-    return render_template('index.html')
 
 @app.route('/dashboard')
 def dashboard():
