@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>Welcome back, {{ current_user.name }}!</h2>
+        <p class="text-muted">Here's your tax compliance overview</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <button class="btn btn-primary">
+            <i class="bi bi-plus me-1"></i> New Filing
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Summary Cards -->
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-body">
+                <h5>Income Tax</h5>
+                <h2>₹0</h2>
+                <p class="text-muted mb-0">Estimated liability for FY 2024-25</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-body">
+                <h5>GST</h5>
+                <h2>₹0</h2>
+                <p class="text-muted mb-0">Pending returns</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-body">
+                <h5>Investments</h5>
+                <h2>₹0</h2>
+                <p class="text-muted mb-0">Total portfolio value</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Activities</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">ITR Filed for FY 2023-24</h6>
+                            <small class="text-muted">2 days ago</small>
+                        </div>
+                        <span class="badge bg-success">Completed</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">GSTR-3B Due</h6>
+                            <small class="text-muted">Due in 5 days</small>
+                        </div>
+                        <span class="badge bg-warning text-dark">Pending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/calculator" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-calculator me-2"></i> Tax Calculator
+                    </a>
+                    <a href="/gst" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-receipt me-2"></i> File GST
+                    </a>
+                    <a href="/investments" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-graph-up me-2"></i> Investment Planner
+                    </a>
+                    <a href="/business" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-building me-2"></i> Business Tools
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Tax Calendar</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Due Date</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>July 31, 2024</td>
+                                <td>ITR Filing Deadline</td>
+                                <td><span class="badge bg-success">Completed</span></td>
+                                <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
+                            </tr>
+                            <tr>
+                                <td>August 20, 2024</td>
+                                <td>GSTR-3B Filing</td>
+                                <td><span class="badge bg-warning text-dark">Pending</span></td>
+                                <td><a href="/gst" class="btn btn-sm btn-primary">File Now</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
