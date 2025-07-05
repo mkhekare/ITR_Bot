@@ -8,6 +8,9 @@ RUN apt-get update && apt-get install -y \
     poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Gunicorn explicitly
+RUN pip install gunicorn
+
 # Set working directory
 WORKDIR /app
 
@@ -27,5 +30,5 @@ EXPOSE 7860
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 
-# Run the application
+# Run the application using Python module syntax
 CMD ["gunicorn", "--bind", "0.0.0.0:7860", "app:app"]
