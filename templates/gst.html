@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4>GST Filing</h4>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <h5>GST Services Coming Soon!</h5>
+            <p>We're currently working on our GST compliance features including:</p>
+            <ul>
+                <li>GST return filing (GSTR-1, GSTR-3B)</li>
+                <li>Invoice generation and management</li>
+                <li>Input tax credit tracking</li>
+                <li>Compliance alerts</li>
+            </ul>
+            <p class="mb-0">This feature will be available from October 2024.</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5>Pending Returns</h5>
+                        <h2>₹12,450</h2>
+                        <p>1 return pending for August 2024</p>
+                        <button class="btn btn-sm btn-outline-primary">View Details</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5>Input Tax Credit</h5>
+                        <h2>₹8,720</h2>
+                        <p>Available for claim</p>
+                        <button class="btn btn-sm btn-outline-primary">Claim Now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
