@@ -3,38 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Tax Assistant</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>TaxPro - {% block title %}{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">
-                <i class="bi bi-calculator me-2"></i>AI Tax Assistant
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="bi bi-calculator me-2"></i>
+                <span class="fw-bold">TaxPro</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/"><i class="bi bi-house-door me-1"></i> Home</a>
+                        <a class="nav-link" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i> Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/calculator"><i class="bi bi-calculator me-1"></i> Calculator</a>
+                        <a class="nav-link" href="/calculator"><i class="bi bi-calculator me-1"></i> Tax Calculator</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/faq"><i class="bi bi-question-circle me-1"></i> FAQ</a>
+                        <a class="nav-link" href="/gst"><i class="bi bi-receipt me-1"></i> GST</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/investments"><i class="bi bi-graph-up me-1"></i> Investments</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/business"><i class="bi bi-building me-1"></i> Business</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i> {{ current_user.name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/dashboard">Dashboard</a></li>
+                            <li><a class="dropdown-item" href="#">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/register">Register</a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container-fluid py-4">
+    <main class="container my-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -47,9 +77,47 @@
         {% endwith %}
 
         {% block content %}{% endblock %}
-    </div>
+    </main>
 
-    <!-- Enhanced AI Assistant -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>TaxPro</h5>
+                    <p class="text-muted">Simplifying tax compliance for individuals and businesses.</p>
+                </div>
+                <div class="col-md-2">
+                    <h6>Solutions</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="/calculator" class="text-decoration-none text-muted">Tax Calculator</a></li>
+                        <li><a href="/gst" class="text-decoration-none text-muted">GST Filing</a></li>
+                        <li><a href="/investments" class="text-decoration-none text-muted">Investments</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6>Resources</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="/advisory" class="text-decoration-none text-muted">Tax Advisory</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">Blog</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6>Subscribe to our newsletter</h6>
+                    <div class="input-group mb-3">
+                        <input type="email" class="form-control" placeholder="Your email">
+                        <button class="btn btn-primary" type="button">Subscribe</button>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center text-muted">
+                <small>© 2025 TaxPro. All rights reserved.</small>
+            </div>
+        </div>
+    </footer>
+
+    <!-- AI Assistant -->
     <div class="ai-assistant">
         <button class="assistant-btn" onclick="toggleAssistant()">
             <i class="bi bi-robot"></i>
@@ -61,7 +129,7 @@
             </div>
             <div class="assistant-messages" id="assistantMessages">
                 <div class="assistant-message">
-                    Hello! I'm your AI Tax Assistant. How can I help you with your tax filing today?
+                    Hello! I'm your AI Tax Assistant. How can I help you with tax compliance today?
                 </div>
             </div>
             <div class="assistant-input">
@@ -74,37 +142,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function toggleAssistant() {
-            const container = document.getElementById('assistantContainer');
-            container.style.display = container.style.display === 'none' ? 'flex' : 'none';
-        }
-
-        function askQuestion() {
-            const question = document.getElementById('userQuestion').value;
-            if (!question.trim()) return;
-
-            const messagesDiv = document.getElementById('assistantMessages');
-            messagesDiv.innerHTML += `<div class="user-message">${question}</div>`;
-            
-            // Get context from current page
-            const context = document.body.innerText.substring(0, 1000);
-            
-            fetch('/ask_gemini', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `question=${encodeURIComponent(question)}&context=${encodeURIComponent(context)}`
-            })
-            .then(response => response.text())
-            .then(answer => {
-                messagesDiv.innerHTML += `<div class="assistant-message">${answer}</div>`;
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            });
-            
-            document.getElementById('userQuestion').value = '';
-        }
-    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block js %}{% endblock %}
 </body>
 </html>
