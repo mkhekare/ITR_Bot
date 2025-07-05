@@ -1,143 +1,153 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, current_user, login_user, logout_user, login_required
+from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
-import logging
-import sys
-from pathlib import Path
+from config import Config
+from datetime import datetime
+import google.generativeai as genai
 
-# Initialize Flask app
 app = Flask(__name__)
+app.config.from_object(Config)
 
-# Configure absolute paths
-BASE_DIR = Path(__file__).parent.resolve()
-app.template_folder = str(BASE_DIR / 'templates')
-app.static_folder = str(BASE_DIR / 'static')
+db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
-# Basic configuration
-app.config['SECRET_KEY'] = 'dev-secret-key'
-app.config['UPLOAD_FOLDER'] = str(BASE_DIR / 'uploads')
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+# Initialize Gemini
+genai.configure(api_key=app.config['GEMINI_API_KEY'])
+model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Models
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256))
+    name = db.Column(db.String(100))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    tax_profiles = db.relationship('TaxProfile', backref='user', lazy=True)
+    gst_profiles = db.relationship('GSTProfile', backref='user', lazy=True)
+
+class TaxProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    pan_number = db.Column(db.String(10))
+    financial_year = db.Column(db.String(9))
+    regime = db.Column(db.String(20))
+    # Add other tax-related fields
+
+class GSTProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    gstin = db.Column(db.String(15))
+    business_name = db.Column(db.String(100))
+    # Add other GST-related fields
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Routes
 @app.route('/')
 def index():
-    try:
-        logger.info("Rendering index page")
-        return render_template('index.html')
-    except Exception as e:
-        logger.error(f"Error rendering index: {str(e)}")
-        return "Error loading home page", 500
-
-# Allowed file extensions
-ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'txt'}
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return render_template('index.html')
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
-    # Dummy data for dashboard
-    dummy_data = {
-        'tax_liability': 45200,
-        'gst_returns': 12450,
-        'portfolio_value': 485000,
-        'recent_activity': [
-            {'title': 'Salary slip processed', 'amount': 85000, 'status': 'completed'},
-            {'title': 'GSTR-3B Due', 'due_date': '2024-08-20', 'status': 'pending'}
-        ]
-    }
-    return render_template('dashboard.html', data=dummy_data)
+    return render_template('dashboard.html')
 
-@app.route('/upload', methods=['GET', 'POST'])
-def upload():
-    if request.method == 'POST':
-        if 'files' not in request.files:
-            flash('No files selected', 'danger')
-            return redirect(request.url)
-        
-        files = request.files.getlist('files')
-        if not files or files[0].filename == '':
-            flash('No files selected', 'danger')
-            return redirect(request.url)
-        
-        try:
-            financial_year = request.form.get('financial_year', '2025-26')
-            age_group = request.form.get('age_group', 'below_60')
-            
-            extracted_data = {
-                'salary_components': {},
-                'other_income': {},
-                'deductions': {},
-                'documents': []
-            }
-            
-            for file in files:
-                if file and allowed_file(file.filename):
-                    filename = secure_filename(file.filename)
-                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    file.save(filepath)
-                    
-                    result = process_uploaded_file(filepath)
-                    extracted_data['documents'].append({
-                        'filename': filename,
-                        'summary': result.get('summary', 'Analysis completed')
-                    })
-                    
-                    # Merge extracted data
-                    for key in ['salary_components', 'other_income', 'deductions']:
-                        if key in result:
-                            extracted_data[key].update(result[key])
-            
-            # Calculate tax
-            tax_results = calculate_tax(
-                salary_components=extracted_data['salary_components'],
-                other_income=extracted_data['other_income'],
-                deductions=extracted_data['deductions'],
-                age_group=age_group,
-                financial_year=financial_year
-            )
-            
-            return render_template('results.html',
-                                extracted_data=extracted_data,
-                                tax_results=tax_results)
-        
-        except Exception as e:
-            logger.error(f"Error processing documents: {str(e)}")
-            flash('Error analyzing documents. Please try again.', 'danger')
-            return redirect(request.url)
-    
-    return render_template('upload.html')
-
-@app.route('/calculator')
+# Tax Calculator Routes
+@app.route('/calculator', methods=['GET', 'POST'])
+@login_required
 def calculator():
-    return render_template('calculator.html')
+    if request.method == 'POST':
+        # Process calculator form data
+        pass
+    return render_template('calculator/step1.html')
 
+# GST Routes
 @app.route('/gst')
-def gst():
-    return render_template('gst.html')
+@login_required
+def gst_dashboard():
+    return render_template('gst/dashboard.html')
 
+# Investments Routes
 @app.route('/investments')
-def investments():
-    return render_template('investments.html')
+@login_required
+def investments_dashboard():
+    return render_template('investments/dashboard.html')
 
-@app.route('/faq')
-def faq():
-    return render_template('faq.html')
+# Business Solutions Routes
+@app.route('/business')
+@login_required
+def business_dashboard():
+    return render_template('business/dashboard.html')
 
-# Error handlers
-@app.errorhandler(404)
-def not_found_error(error):
-    return render_template('errors/404.html'), 404
+# Advisory Routes
+@app.route('/advisory')
+def advisory_resources():
+    return render_template('advisory/resources.html')
 
-@app.errorhandler(500)
-def internal_error(error):
-    logger.error(f"Server Error: {error}")
-    return render_template('errors/500.html'), 500
+# Auth Routes
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        user = User.query.filter_by(email=email).first()
+        
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user)
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid email or password', 'danger')
+    return render_template('auth/login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        name = request.form.get('name')
+        password = request.form.get('password')
+        
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered', 'danger')
+        else:
+            user = User(
+                email=email,
+                name=name,
+                password_hash=generate_password_hash(password)
+            )
+            db.session.add(user)
+            db.session.commit()
+            login_user(user)
+            return redirect(url_for('dashboard'))
+    return render_template('auth/register.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+# AI Assistant Endpoint
+@app.route('/ask_gemini', methods=['POST'])
+def ask_gemini():
+    user_question = request.form.get('question')
+    context = request.form.get('context', '')
+    
+    prompt = f"""As a professional tax advisor, provide accurate and helpful information about:
+    {context}
+    Question: {user_question}
+    
+    Answer concisely with relevant tax sections when applicable."""
+    
+    response = model.generate_content(prompt)
+    return response.text
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
