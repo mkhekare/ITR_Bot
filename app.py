@@ -19,7 +19,9 @@ db = SQLAlchemy(app)
 
 # Authentication setup
 login_manager = LoginManager(app)
-login_manager.login_view = 'auth.login'
+login_manager.login_view = 'login'  # Make sure this matches your route function name
+login_manager.login_message = 'Please log in to access this page.'
+login_manager.login_message_category = 'info'
 
 # Configure upload folder
 UPLOAD_FOLDER = 'uploads'
@@ -73,7 +75,21 @@ def index():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html')
+    try:
+        # Add dummy data for testing
+        dummy_data = {
+            'tax_liability': 45200,
+            'gst_returns': 12450,
+            'portfolio_value': 485000,
+            'recent_activity': [
+                {'title': 'Salary slip processed', 'amount': 85000, 'status': 'completed'},
+                {'title': 'GSTR-3B Due', 'due_date': '2024-08-20', 'status': 'pending'}
+            ]
+        }
+        return render_template('dashboard.html', data=dummy_data)
+    except Exception as e:
+        app.logger.error(f"Dashboard error: {str(e)}")
+        return render_template('errors/500.html'), 500
 
 @app.route('/calculator')
 @login_required
@@ -132,50 +148,16 @@ def advisory_resources():
 def blog():
     return render_template('blog.html')
 
-# Authentication routes
+# Update your login and auth routes
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        user = User.query.filter_by(email=email).first()
-        
-        if user and check_password_hash(user.password_hash, password):
-            login_user(user)
-            next_page = request.args.get('next')
-            return redirect(next_page or url_for('dashboard'))
-        flash('Invalid email or password', 'danger')
-    
-    return render_template('auth/login.html')
+    # Your login implementation
+    pass
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    
-    if request.method == 'POST':
-        email = request.form.get('email')
-        name = request.form.get('name')
-        password = request.form.get('password')
-        
-        if User.query.filter_by(email=email).first():
-            flash('Email already registered', 'danger')
-        else:
-            user = User(
-                email=email,
-                name=name,
-                password_hash=generate_password_hash(password)
-            )
-            db.session.add(user)
-            db.session.commit()
-            login_user(user)
-            flash('Registration successful!', 'success')
-            return redirect(url_for('dashboard'))
-    
-    return render_template('auth/register.html')
+    # Your registration implementation
+    pass
 
 @app.route('/logout')
 @login_required
