@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4>Frequently Asked Questions</h4>
+    </div>
+    <div class="card-body">
+        {{ faq_content|safe }}
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header bg-info text-white">
+        <h5>Need More Help?</h5>
+    </div>
+    <div class="card-body">
+        <p>Use the AI Assistant button at the bottom right of the screen to ask any tax-related questions.</p>
+        <p>For complex tax situations, we recommend consulting a qualified tax professional.</p>
+    </div>
+</div>
+{% endblock %}
