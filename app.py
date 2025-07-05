@@ -22,7 +22,7 @@ def index():
 
 @app.route('/dashboard')
 def dashboard():
-    return render_template('dashboard.html', username="User")  # Pass dummy username
+    return render_template('dashboard.html', username="User")
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
@@ -32,21 +32,43 @@ def upload():
             return redirect(request.url)
         
         file = request.files['file']
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+            
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            flash(f'File {filename} uploaded successfully')
-            return redirect(url_for('analyze_documents'))  # Redirect to analysis
+            # Save file temporarily (in production, use proper storage)
+            upload_folder = os.path.join(app.root_path, 'uploads')
+            os.makedirs(upload_folder, exist_ok=True)
+            filepath = os.path.join(upload_folder, filename)
+            file.save(filepath)
             
+            flash('File uploaded successfully')
+            return redirect(url_for('analyze_documents', filename=filename))
+        
         flash('Invalid file type')
         return redirect(request.url)
     
     return render_template('upload.html')
 
-# Add this new route
-@app.route('/analyze_documents', methods=['GET', 'POST'])
+@app.route('/analyze_documents')
 def analyze_documents():
-    # Add your document analysis logic here
-    return render_template('results.html')
+    filename = request.args.get('filename')
+    if not filename:
+        flash('No file to analyze')
+        return redirect(url_for('upload'))
+    
+    try:
+        # Add your document analysis logic here using the AI model
+        # This is a placeholder - implement your actual analysis
+        analysis_result = "Sample analysis result"
+        return render_template('results.html', 
+                             filename=filename,
+                             result=analysis_result)
+    except Exception as e:
+        flash(f'Analysis error: {str(e)}')
+        return redirect(url_for('upload'))
 
 @app.route('/faq')
 def faq():
@@ -110,4 +132,7 @@ def internal_error(e):
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
+    # Create uploads directory if it doesn't exist
+    upload_dir = os.path.join(app.root_path, 'uploads')
+    os.makedirs(upload_dir, exist_ok=True)
     app.run(debug=True)
