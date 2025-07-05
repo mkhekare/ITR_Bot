@@ -4,26 +4,41 @@ import os
 from config import Config
 import google.generativeai as genai
 
+# Initialize Flask app
 app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = app.config['SECRET_KEY']
 
-# Initialize AI
+# Initialize Gemini AI
 genai.configure(api_key=app.config['GEMINI_API_KEY'])
 model = genai.GenerativeModel('gemini-1.5-flash')
 
+# Helper Functions
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-def process_document(filepath):
-    """Implement your actual document processing logic here"""
-    # Example: Use your AI model to analyze the document
+def process_uploaded_file(file):
+    """Process the uploaded file and return analysis results"""
     try:
-        with open(filepath, 'rb') as f:
-            response = model.generate_content(f.read())
+        # For text files
+        if file.filename.lower().endswith('.txt'):
+            text = file.read().decode('utf-8')
+        
+        # For other files (PDF, images), you'll need additional libraries
+        # This is a placeholder - implement your actual processing
+        else:
+            text = f"File content analysis for {file.filename}"
+        
+        # Analyze with Gemini
+        prompt = f"""Analyze this document for tax-related information:
+        {text}
+        Provide key findings and recommendations:"""
+        
+        response = model.generate_content(prompt)
         return response.text
+    
     except Exception as e:
-        return f"Analysis error: {str(e)}"
+        return f"Error processing file: {str(e)}"
 
 # Routes
 @app.route('/')
@@ -43,32 +58,47 @@ def upload():
         
         file = request.files['file']
         if file.filename == '':
-            flash('No selected file')
+            flash('No file selected')
             return redirect(request.url)
             
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            upload_folder = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
-            os.makedirs(upload_folder, exist_ok=True)
-            filepath = os.path.join(upload_folder, filename)
-            file.save(filepath)
             
-            # Process the file immediately
-            analysis_result = process_document(filepath)
-            return render_template('results.html', 
+            # Process file directly without saving
+            analysis_result = process_uploaded_file(file)
+            
+            return render_template('results.html',
                                 filename=filename,
                                 result=analysis_result)
         
-        flash('Invalid file type')
+        flash('Invalid file type. Allowed types: ' + ', '.join(app.config['ALLOWED_EXTENSIONS']))
         return redirect(request.url)
     
     return render_template('upload.html')
 
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
+
+@app.route('/gst')
+def gst():
+    return render_template('gst.html')
+
+@app.route('/investments')
+def investments():
+    return render_template('investments.html')
+
+@app.route('/calculator', methods=['GET', 'POST'])
+def calculator():
+    if request.method == 'POST':
+        # Process form data
+        flash('Calculation complete')
+        return redirect(url_for('results'))
+    return render_template('calculator.html')
+
 @app.route('/results')
 def results():
-    # This route is just for displaying results from direct access
-    flash('Please upload a document first')
-    return redirect(url_for('upload'))
+    return render_template('results.html')
 
 # Error Handlers
 @app.errorhandler(404)
@@ -80,7 +110,7 @@ def internal_error(e):
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
-    # Create upload directory if it doesn't exist
-    upload_dir = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
-    os.makedirs(upload_dir, exist_ok=True)
+    # Create upload directory if configured
+    if hasattr(app.config, 'UPLOAD_FOLDER'):
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     app.run(debug=True)
