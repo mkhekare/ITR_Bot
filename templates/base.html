@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tax Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">AI Tax Assistant</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/upload">File Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/faq">FAQ</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- AI Assistant Chat -->
+    <div class="ai-assistant">
+        <button class="btn btn-primary assistant-btn" onclick="toggleAssistant()">
+            <i class="bi bi-robot"></i> Tax Assistant
+        </button>
+        <div class="assistant-container" id="assistantContainer">
+            <div class="assistant-header">
+                <h5>AI Tax Assistant</h5>
+                <button class="btn-close" onclick="toggleAssistant()"></button>
+            </div>
+            <div class="assistant-messages" id="assistantMessages"></div>
+            <div class="assistant-input">
+                <input type="text" id="userQuestion" placeholder="Ask about taxes..." class="form-control">
+                <button onclick="askQuestion()" class="btn btn-sm btn-primary">Ask</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleAssistant() {
+            const container = document.getElementById('assistantContainer');
+            container.style.display = container.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function askQuestion() {
+            const question = document.getElementById('userQuestion').value;
+            if (!question.trim()) return;
+
+            // Add user question to chat
+            const messagesDiv = document.getElementById('assistantMessages');
+            messagesDiv.innerHTML += `<div class="user-message">${question}</div>`;
+            
+            // Get context from current page
+            const context = document.body.innerText.substring(0, 1000);
+            
+            // Call backend
+            fetch('/ask_gemini', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `question=${encodeURIComponent(question)}&context=${encodeURIComponent(context)}`
+            })
+            .then(response => response.text())
+            .then(answer => {
+                messagesDiv.innerHTML += `<div class="assistant-message">${answer}</div>`;
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            });
+            
+            document.getElementById('userQuestion').value = '';
+        }
+    </script>
+</body>
+</html>
