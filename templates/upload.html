@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4>Upload Your Documents</h4>
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" action="/upload">
+            <div class="mb-3">
+                <label for="financial_year" class="form-label">Financial Year</label>
+                <select class="form-select" id="financial_year" name="financial_year" required>
+                    <option value="2024-25">2024-25 (AY 2025-26)</option>
+                    <option value="2025-26" selected>2025-26 (AY 2026-27)</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="age_group" class="form-label">Age Group</label>
+                <select class="form-select" id="age_group" name="age_group" required>
+                    <option value="below_60">Below 60 years</option>
+                    <option value="senior">60-80 years (Senior Citizen)</option>
+                    <option value="super_senior">Above 80 years (Super Senior Citizen)</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="files" class="form-label">Upload Documents (Salary slips, Form 16, Investment proofs, etc.)</label>
+                <input class="form-control" type="file" id="files" name="files" multiple required>
+                <div class="form-text">Supported formats: PDF, JPG, PNG, TXT</div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Analyze Documents</button>
+        </form>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header bg-info text-white">
+        <h5>What to Upload?</h5>
+    </div>
+    <div class="card-body">
+        <ul>
+            <li><strong>Salary Documents:</strong> Payslips, Form 16, salary certificates</li>
+            <li><strong>Investment Proofs:</strong> LIC receipts, PPF statements, ELSS investment proofs</li>
+            <li><strong>House Property:</strong> Home loan interest certificates, rent receipts</li>
+            <li><strong>Other Income:</strong> Interest statements, capital gains reports</li>
+            <li><strong>Deductions:</strong> Medical insurance receipts, donation receipts</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
