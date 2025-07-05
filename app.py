@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 import os
-from datetime import datetime
+import time
 from config import Config
 import google.generativeai as genai
 
@@ -9,11 +9,10 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = app.config['SECRET_KEY']
 
-# Initialize Gemini AI
+# Initialize AI
 genai.configure(api_key=app.config['GEMINI_API_KEY'])
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Configure upload folder
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -21,26 +20,85 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-def analyze_document(filepath):
-    """Analyze the document using Gemini AI"""
-    try:
-        # For text files
-        if filepath.lower().endswith('.txt'):
-            with open(filepath, 'r') as f:
-                content = f.read()
-        else:
-            # For other file types (implement your specific processing)
-            content = f"Contents of {os.path.basename(filepath)}"
-        
-        prompt = f"""Analyze this document for tax-related information:
-        {content}
-        Provide key findings and recommendations:"""
-        
-        response = model.generate_content(prompt)
-        return response.text
+def analyze_content(content):
+    """Analyze content with Gemini AI"""
+    prompt = """Analyze this tax document and provide:
+    1. Salary components with amounts
+    2. Deductions with amounts
+    3. Tax regime recommendations
     
+    Document Content:
+    {content}"""
+    
+    try:
+        response = model.generate_content(prompt.format(content=content))
+        return response.text
     except Exception as e:
-        return f"Error analyzing document: {str(e)}"
+        return f"Analysis error: {str(e)}"
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    if request.method == 'POST':
+        if 'files' not in request.files:
+            return jsonify({'error': 'No file selected'}), 400
+        
+        files = request.files.getlist('files')
+        if not files or files[0].filename == '':
+            return jsonify({'error': 'No files selected'}), 400
+
+        try:
+            # Process first file only for demo
+            file = files[0]
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+                
+                # Simulate processing delay
+                time.sleep(2)
+                
+                # Generate sample response (replace with actual analysis)
+                result = {
+                    'status': 'success',
+                    'redirect': url_for('results'),
+                    'financial_year': request.form.get('financial_year'),
+                    'age_group': request.form.get('age_group')
+                }
+                return jsonify(result)
+            
+            return jsonify({'error': 'Invalid file type'}), 400
+        
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    return render_template('upload.html')
+
+@app.route('/results')
+def results():
+    # Sample data - replace with actual processed data
+    data = {
+        'filename': 'Sample_Document.pdf',
+        'extracted_data': {
+            'salary_components': {
+                'basic_salary': 800000,
+                'hra': 400000,
+                'special_allowance': 200000
+            },
+            'deductions': {
+                '80C': 150000,
+                '80D': 25000
+            }
+        },
+        'tax_results': {
+            'recommended_regime': 'new',
+            'savings': 12500,
+            'old_regime': {'taxable_income': 1200000, 'tax': 187500},
+            'new_regime': {'taxable_income': 1250000, 'tax': 175000}
+        }
+    }
+    return render_template('results.html', **data)
+
+
 
 def generate_sample_data():
     """Generate sample data for dashboard and results"""
@@ -95,56 +153,6 @@ def dashboard():
         app.logger.error(f"Dashboard error: {str(e)}")
         return render_template('500.html'), 500
 
-@app.route('/upload', methods=['GET', 'POST'])
-def upload():
-    if request.method == 'POST':
-        # Check if file was uploaded
-        if 'file' not in request.files:
-            flash('No file selected', 'error')
-            return redirect(request.url)
-        
-        file = request.files['file']
-        
-        # Check if filename is empty
-        if file.filename == '':
-            flash('No file selected', 'error')
-            return redirect(request.url)
-        
-        # Validate file type
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            
-            try:
-                # Save the file
-                file.save(filepath)
-                
-                # Get form data
-                financial_year = request.form.get('financial_year', '2024-25')
-                age_group = request.form.get('age_group', 'below_60')
-                
-                # Analyze the document
-                analysis_result = analyze_document(filepath)
-                
-                # Generate sample results data
-                results_data = generate_sample_data()
-                results_data.update({
-                    'filename': filename,
-                    'financial_year': financial_year,
-                    'age_group': age_group,
-                    'analysis_text': analysis_result
-                })
-                
-                return render_template('results.html', **results_data)
-            
-            except Exception as e:
-                flash(f'Error processing file: {str(e)}', 'error')
-                return redirect(request.url)
-        
-        flash('Invalid file type. Allowed types: ' + ', '.join(app.config['ALLOWED_EXTENSIONS']), 'error')
-        return redirect(request.url)
-    
-    return render_template('upload.html')
 
 @app.route('/analyze_documents', methods=['POST'])
 def analyze_documents():
@@ -170,11 +178,6 @@ def calculator():
         flash('Calculation complete', 'success')
         return redirect(url_for('results'))
     return render_template('calculator.html')
-
-@app.route('/results')
-def results():
-    data = generate_sample_data()
-    return render_template('results.html', **data)
 
 # Error handlers
 @app.errorhandler(404)
