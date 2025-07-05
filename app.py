@@ -83,6 +83,11 @@ def calculator():
 def gst_dashboard():
     return render_template('gst/dashboard.html')
 
+# Add this with your other routes (around line 54 where your other routes are)
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
+
 # Investments Routes
 @app.route('/investments')
 @login_required
