@@ -6,30 +6,8 @@
         <h4>Upload Your Documents</h4>
     </div>
     <div class="card-body">
-        <form id="uploadForm" method="POST" enctype="multipart/form-data" action="{{ url_for('analyze_documents') }}">
-            <div class="mb-3">
-                <label for="financial_year" class="form-label">Financial Year</label>
-                <select class="form-select" id="financial_year" name="financial_year" required>
-                    <option value="2024-25">2024-25 (AY 2025-26)</option>
-                    <option value="2025-26" selected>2025-26 (AY 2026-27)</option>
-                </select>
-            </div>
-            
-            <div class="mb-3">
-                <label for="age_group" class="form-label">Age Group</label>
-                <select class="form-select" id="age_group" name="age_group" required>
-                    <option value="below_60">Below 60 years</option>
-                    <option value="senior">60-80 years (Senior Citizen)</option>
-                    <option value="super_senior">Above 80 years (Super Senior Citizen)</option>
-                </select>
-            </div>
-            
-            <div class="mb-3">
-                <label for="files" class="form-label">Upload Documents (Salary slips, Form 16, Investment proofs, etc.)</label>
-                <input class="form-control" type="file" id="files" name="files" multiple required accept=".pdf,.jpg,.jpeg,.png,.txt">
-                <div class="form-text">Supported formats: PDF, JPG, PNG, TXT</div>
-            </div>
-            
+        <form id="uploadForm" method="POST" enctype="multipart/form-data">
+            <!-- Your existing form fields -->
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary" id="analyzeBtn">
                     <span id="submitText">Analyze Documents</span>
@@ -37,35 +15,48 @@
                 </button>
             </div>
         </form>
-        
-        <div class="card mt-4 d-none" id="uploadTips">
-            <div class="card-header bg-info text-white">
-                <h5>What to Upload?</h5>
-            </div>
-            <div class="card-body">
-                <ul class="mb-0">
-                    <li><strong>Salary Documents:</strong> Payslips, Form 16, salary certificates</li>
-                    <li><strong>Investment Proofs:</strong> LIC receipts, PPF statements, ELSS investment proofs</li>
-                    <li><strong>House Property:</strong> Home loan interest certificates, rent receipts</li>
-                    <li><strong>Other Income:</strong> Interest statements, capital gains reports</li>
-                </ul>
-            </div>
-        </div>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Show upload tips
-    document.getElementById('uploadTips').classList.remove('d-none');
+document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
     
-    // Handle form submission
-    document.getElementById('uploadForm').addEventListener('submit', function(e) {
-        const btn = document.getElementById('analyzeBtn');
-        btn.disabled = true;
-        document.getElementById('submitText').textContent = 'Analyzing...';
-        document.getElementById('spinner').classList.remove('d-none');
-    });
+    const btn = document.getElementById('analyzeBtn');
+    const spinner = document.getElementById('spinner');
+    const submitText = document.getElementById('submitText');
+    
+    // Show loading state
+    btn.disabled = true;
+    submitText.textContent = 'Analyzing...';
+    spinner.classList.remove('d-none');
+    
+    try {
+        const formData = new FormData(this);
+        
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+            throw new Error(result.error);
+        }
+        
+        // Redirect to results page on success
+        window.location.href = result.redirect;
+        
+    } catch (error) {
+        // Show error message
+        alert('Error: ' + error.message);
+        
+        // Reset button state
+        btn.disabled = false;
+        submitText.textContent = 'Analyze Documents';
+        spinner.classList.add('d-none');
+    }
 });
 </script>
 {% endblock %}
