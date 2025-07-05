@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from utils.document_processor import process_uploaded_file
 import os
 from config import Config
 from datetime import datetime
@@ -155,6 +156,61 @@ def register():
             login_user(user)
             return redirect(url_for('dashboard'))
     return render_template('auth/register.html')
+
+@app.route('/analyze', methods=['POST'])
+def analyze_documents():
+    if 'files' not in request.files:
+        flash('No files uploaded', 'danger')
+        return redirect(url_for('upload'))
+    
+    files = request.files.getlist('files')
+    financial_year = request.form.get('financial_year')
+    age_group = request.form.get('age_group')
+    
+    extracted_data = {
+        'salary_components': {},
+        'other_income': {},
+        'deductions': {},
+        'documents': []
+    }
+    
+    for file in files:
+        if file.filename == '':
+            continue
+            
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            
+            # Process each file
+            result = process_uploaded_file(filepath)
+            extracted_data['documents'].append({
+                'filename': filename,
+                'content': result['content'][:1000] + "..." if len(result['content']) > 1000 else result['content'],
+                'summary': result['summary']
+            })
+            
+            # Aggregate data
+            if 'salary_components' in result:
+                extracted_data['salary_components'].update(result['salary_components'])
+            if 'other_income' in result:
+                extracted_data['other_income'].update(result['other_income'])
+            if 'deductions' in result:
+                extracted_data['deductions'].update(result['deductions'])
+    
+    # Calculate tax
+    tax_results = calculate_tax(
+        salary_components=extracted_data['salary_components'],
+        other_income=extracted_data['other_income'],
+        deductions=extracted_data['deductions'],
+        age_group=age_group,
+        financial_year=financial_year
+    )
+    
+    return render_template('results.html', 
+                         extracted_data=extracted_data,
+                         tax_results=tax_results)
 
 @app.route('/logout')
 @login_required
