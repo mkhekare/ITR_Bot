@@ -14,6 +14,21 @@ import google.generativeai as genai
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+@app.before_request
+def log_request_info():
+    app.logger.debug(f"Request Headers: {request.headers}")
+    app.logger.debug(f"Request Path: {request.path}")
+    app.logger.debug(f"Request Method: {request.method}")
+
+@app.after_request
+def log_response_info(response):
+    app.logger.debug(f"Response Status: {response.status}")
+    return response
+
 # Database setup
 db = SQLAlchemy(app)
 
