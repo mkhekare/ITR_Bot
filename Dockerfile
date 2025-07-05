@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     libtesseract-dev \
     poppler-utils \
+    libmagic1 \  # This is the critical missing dependency
     && rm -rf /var/lib/apt/lists/*
 
 # Install Gunicorn explicitly
