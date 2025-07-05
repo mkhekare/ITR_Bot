@@ -1,0 +1,94 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.hero-section {
+    background-color: #e3f2fd;
+    margin-bottom: 2rem;
+}
+
+.card {
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.assistant-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 12px;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.assistant-container {
+    display: none;
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 350px;
+    height: 500px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    flex-direction: column;
+}
+
+.assistant-header {
+    padding: 10px 15px;
+    background: #0d6efd;
+    color: white;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.assistant-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+}
+
+.assistant-input {
+    padding: 10px;
+    display: flex;
+    border-top: 1px solid #ddd;
+}
+
+.user-message {
+    background: #e3f2fd;
+    padding: 8px 12px;
+    border-radius: 18px;
+    margin-bottom: 8px;
+    max-width: 80%;
+    align-self: flex-end;
+}
+
+.assistant-message {
+    background: #f1f1f1;
+    padding: 8px 12px;
+    border-radius: 18px;
+    margin-bottom: 8px;
+    max-width: 80%;
+}
+
+.optimization-tips ul {
+    padding-left: 20px;
+}
+
+.optimization-tips h5 {
+    margin-top: 15px;
+    color: #0d6efd;
+}
+
+pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
