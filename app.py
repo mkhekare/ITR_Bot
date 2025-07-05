@@ -76,6 +76,27 @@ def results():
 def faq():
     return render_template('faq.html')
 
+# Add these routes to your existing app.py
+@app.route('/gst')
+def gst():
+    return render_template('gst.html')
+
+@app.route('/investments')
+def investments():
+    return render_template('investments.html')
+
+@app.route('/resources')
+def resources():
+    return render_template('advisory/resources.html')
+
+@app.route('/blog')
+def blog():
+    return render_template('blog.html')
+
+@app.route('/advisory')
+def advisory():
+    return render_template('advisory.html')
+
 # GST Routes
 @app.route('/gst')
 @login_required
