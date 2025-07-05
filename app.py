@@ -4,20 +4,18 @@ import os
 from config import Config
 import google.generativeai as genai
 
-# Initialize Flask app
 app = Flask(__name__)
 app.config.from_object(Config)
-app.secret_key = app.config['SECRET_KEY']  # Required for flash messages
+app.secret_key = app.config['SECRET_KEY']  # For flash messages
 
-# Initialize Gemini AI
+# Initialize AI
 genai.configure(api_key=app.config['GEMINI_API_KEY'])
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Helper Functions
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-# Main Routes
+# Routes
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -26,28 +24,28 @@ def index():
 def dashboard():
     return render_template('dashboard.html')
 
-@app.route('/faq')
-def faq():
-    return render_template('faq.html')
-
-# Document Handling Routes
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if request.method == 'POST':
         if 'file' not in request.files:
-            flash('No file selected', 'danger')
+            flash('No file selected')
             return redirect(request.url)
         
-        files = request.files.getlist('file')
-        for file in files:
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                # Save file and process (implementation needed)
-                flash(f'File {filename} uploaded successfully', 'success')
-            else:
-                flash('Invalid file type', 'danger')
-        return redirect(url_for('dashboard'))
+        file = request.files['file']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            # In production, save the file properly
+            flash(f'File {filename} uploaded successfully')
+            return redirect(url_for('dashboard'))
+        
+        flash('Invalid file type')
+        return redirect(request.url)
+    
     return render_template('upload.html')
+
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
 
 # Tax Services Routes
 @app.route('/calculator', methods=['GET', 'POST'])
