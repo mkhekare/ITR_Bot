@@ -8,8 +8,8 @@ RUN apt-get update && \
     libtesseract-dev \
     poppler-utils \
     libmagic1 \
-    build-essential \  # Added for python-magic compilation
-    && rm -rf /var/lib/apt/lists/*
+    build-essential && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create upload directory with proper permissions
 RUN mkdir -p /tmp/uploads && chmod 777 /tmp/uploads
