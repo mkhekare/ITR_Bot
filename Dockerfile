@@ -7,8 +7,9 @@ RUN apt-get update && \
     tesseract-ocr \
     libtesseract-dev \
     poppler-utils \
-    libmagic1 && \
-    rm -rf /var/lib/apt/lists/*
+    libmagic1 \
+    build-essential \  # Added for python-magic compilation
+    && rm -rf /var/lib/apt/lists/*
 
 # Create upload directory with proper permissions
 RUN mkdir -p /tmp/uploads && chmod 777 /tmp/uploads
@@ -35,7 +36,6 @@ EXPOSE 7860
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 ENV UPLOAD_FOLDER=/tmp/uploads
-# Use /tmp for ephemeral storage
-# Run the application using Python module syntax
 
+# Run the application using Python module syntax
 CMD ["gunicorn", "--bind", "0.0.0.0:7860", "app:app"]
