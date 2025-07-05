@@ -6,7 +6,7 @@ import google.generativeai as genai
 
 app = Flask(__name__)
 app.config.from_object(Config)
-app.secret_key = app.config['SECRET_KEY']  # For flash messages
+app.secret_key = app.config['SECRET_KEY']
 
 # Initialize AI
 genai.configure(api_key=app.config['GEMINI_API_KEY'])
@@ -22,7 +22,7 @@ def index():
 
 @app.route('/dashboard')
 def dashboard():
-    return render_template('dashboard.html')
+    return render_template('dashboard.html', username="User")  # Pass dummy username
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
@@ -34,14 +34,19 @@ def upload():
         file = request.files['file']
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            # In production, save the file properly
             flash(f'File {filename} uploaded successfully')
-            return redirect(url_for('dashboard'))
-        
+            return redirect(url_for('analyze_documents'))  # Redirect to analysis
+            
         flash('Invalid file type')
         return redirect(request.url)
     
     return render_template('upload.html')
+
+# Add this new route
+@app.route('/analyze_documents', methods=['GET', 'POST'])
+def analyze_documents():
+    # Add your document analysis logic here
+    return render_template('results.html')
 
 @app.route('/faq')
 def faq():
