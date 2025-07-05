@@ -6,7 +6,7 @@
         <h4>Upload Your Documents</h4>
     </div>
     <div class="card-body">
-        <form method="POST" enctype="multipart/form-data" action="/upload">
+        <form id="uploadForm" method="POST" enctype="multipart/form-data" action="{{ url_for('analyze_documents') }}">
             <div class="mb-3">
                 <label for="financial_year" class="form-label">Financial Year</label>
                 <select class="form-select" id="financial_year" name="financial_year" required>
@@ -26,27 +26,46 @@
             
             <div class="mb-3">
                 <label for="files" class="form-label">Upload Documents (Salary slips, Form 16, Investment proofs, etc.)</label>
-                <input class="form-control" type="file" id="files" name="files" multiple required>
+                <input class="form-control" type="file" id="files" name="files" multiple required accept=".pdf,.jpg,.jpeg,.png,.txt">
                 <div class="form-text">Supported formats: PDF, JPG, PNG, TXT</div>
             </div>
             
-            <button type="submit" class="btn btn-primary">Analyze Documents</button>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                    <span id="submitText">Analyze Documents</span>
+                    <span id="spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                </button>
+            </div>
         </form>
+        
+        <div class="card mt-4 d-none" id="uploadTips">
+            <div class="card-header bg-info text-white">
+                <h5>What to Upload?</h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><strong>Salary Documents:</strong> Payslips, Form 16, salary certificates</li>
+                    <li><strong>Investment Proofs:</strong> LIC receipts, PPF statements, ELSS investment proofs</li>
+                    <li><strong>House Property:</strong> Home loan interest certificates, rent receipts</li>
+                    <li><strong>Other Income:</strong> Interest statements, capital gains reports</li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="card mt-4">
-    <div class="card-header bg-info text-white">
-        <h5>What to Upload?</h5>
-    </div>
-    <div class="card-body">
-        <ul>
-            <li><strong>Salary Documents:</strong> Payslips, Form 16, salary certificates</li>
-            <li><strong>Investment Proofs:</strong> LIC receipts, PPF statements, ELSS investment proofs</li>
-            <li><strong>House Property:</strong> Home loan interest certificates, rent receipts</li>
-            <li><strong>Other Income:</strong> Interest statements, capital gains reports</li>
-            <li><strong>Deductions:</strong> Medical insurance receipts, donation receipts</li>
-        </ul>
-    </div>
-</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show upload tips
+    document.getElementById('uploadTips').classList.remove('d-none');
+    
+    // Handle form submission
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        const btn = document.getElementById('analyzeBtn');
+        btn.disabled = true;
+        document.getElementById('submitText').textContent = 'Analyzing...';
+        document.getElementById('spinner').classList.remove('d-none');
+    });
+});
+</script>
 {% endblock %}
