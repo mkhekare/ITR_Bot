@@ -15,6 +15,16 @@ model = genai.GenerativeModel('gemini-1.5-flash')
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
+def process_document(filepath):
+    """Implement your actual document processing logic here"""
+    # Example: Use your AI model to analyze the document
+    try:
+        with open(filepath, 'rb') as f:
+            response = model.generate_content(f.read())
+        return response.text
+    except Exception as e:
+        return f"Analysis error: {str(e)}"
+
 # Routes
 @app.route('/')
 def index():
@@ -38,139 +48,27 @@ def upload():
             
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            # Save file temporarily (in production, use proper storage)
-            upload_folder = os.path.join(app.root_path, 'uploads')
+            upload_folder = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
             os.makedirs(upload_folder, exist_ok=True)
             filepath = os.path.join(upload_folder, filename)
             file.save(filepath)
             
-            flash('File uploaded successfully')
-            return redirect(url_for('analyze_documents', filename=filename))
+            # Process the file immediately
+            analysis_result = process_document(filepath)
+            return render_template('results.html', 
+                                filename=filename,
+                                result=analysis_result)
         
         flash('Invalid file type')
         return redirect(request.url)
     
     return render_template('upload.html')
 
-@app.route('/analyze_documents')
-def analyze_documents():
-    filename = request.args.get('filename')
-    if not filename:
-        flash('No file to analyze')
-        return redirect(url_for('upload'))
-    
-    try:
-        # Add your document analysis logic here using the AI model
-        # This is a placeholder - implement your actual analysis
-        analysis_result = "Sample analysis result"
-        return render_template('results.html', 
-                             filename=filename,
-                             result=analysis_result)
-    except Exception as e:
-        flash(f'Analysis error: {str(e)}')
-        return redirect(url_for('upload'))
-
-@app.route('/faq')
-def faq():
-    return render_template('faq.html')
-
-# Tax Services Routes
-@app.route('/calculator', methods=['GET', 'POST'])
-def calculator():
-    if request.method == 'POST':
-        # Process calculator form data
-        return redirect(url_for('results'))
-    return render_template('calculator.html')
-
 @app.route('/results')
 def results():
-    return render_template('results.html')
-
-# GST Routes
-@app.route('/gst')
-def gst():
-    return render_template('gst.html')
-
-# Investments Routes
-@app.route('/investments')
-def investments():
-    return render_template('investments.html')
-
-# Advisory Routes
-@app.route('/advisory')
-def advisory():
-    return render_template('advisory/resources.html')
-
-# AI Assistant Route
-@app.route('/ask_gemini', methods=['POST'])
-def ask_gemini():
-    if not request.is_json:
-        return {"error": "Request must be JSON"}, 400
-    
-    data = request.get_json()
-    user_question = data.get('question')
-    context = data.get('context', '')
-    
-    prompt = f"""As a professional tax advisor, provide accurate information about:
-    {context}
-    Question: {user_question}
-    Include relevant tax sections when applicable."""
-    
-    try:
-        response = model.generate_content(prompt)
-        return {"response": response.text}
-    except Exception as e:
-        return {"error": str(e)}, 500
-
-@app.route('/analyze_documents', methods=['GET', 'POST'])
-def analyze_documents():
-    if request.method == 'POST':
-        # Handle file from direct form submission
-        if 'file' not in request.files:
-            flash('No file selected')
-            return redirect(url_for('upload'))
-            
-        file = request.files['file']
-        if file.filename == '':
-            flash('No selected file')
-            return redirect(url_for('upload'))
-            
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            upload_folder = os.path.join(app.root_path, 'uploads')
-            os.makedirs(upload_folder, exist_ok=True)
-            filepath = os.path.join(upload_folder, filename)
-            file.save(filepath)
-            
-            # Process the file immediately for POST requests
-            analysis_result = process_document(filepath)  # Implement your processing function
-            return render_template('results.html', 
-                                filename=filename,
-                                result=analysis_result)
-    
-    # Handle GET requests (from upload route redirect)
-    filename = request.args.get('filename')
-    if not filename:
-        flash('No file to analyze')
-        return redirect(url_for('upload'))
-    
-    try:
-        filepath = os.path.join(app.root_path, 'uploads', filename)
-        analysis_result = process_document(filepath)  # Implement your processing function
-        return render_template('results.html', 
-                            filename=filename,
-                            result=analysis_result)
-    except Exception as e:
-        flash(f'Analysis error: {str(e)}')
-        return redirect(url_for('upload'))
-
-def process_document(filepath):
-    """Example processing function - replace with your actual logic"""
-    # Here you would implement:
-    # 1. Document text extraction
-    # 2. Analysis using your AI model
-    # 3. Return formatted results
-    return "Sample analysis of " + os.path.basename(filepath)
+    # This route is just for displaying results from direct access
+    flash('Please upload a document first')
+    return redirect(url_for('upload'))
 
 # Error Handlers
 @app.errorhandler(404)
@@ -182,7 +80,7 @@ def internal_error(e):
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
-    # Create uploads directory if it doesn't exist
-    upload_dir = os.path.join(app.root_path, 'uploads')
+    # Create upload directory if it doesn't exist
+    upload_dir = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
     os.makedirs(upload_dir, exist_ok=True)
     app.run(debug=True)
