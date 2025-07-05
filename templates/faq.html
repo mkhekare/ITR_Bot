@@ -6,17 +6,69 @@
         <h4>Frequently Asked Questions</h4>
     </div>
     <div class="card-body">
-        {{ faq_content|safe }}
-    </div>
-</div>
+        <div class="accordion" id="faqAccordion">
+            <!-- Question 1 -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#q1">
+                        Which tax regime should I choose - Old or New?
+                    </button>
+                </h2>
+                <div id="q1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <p>The choice depends on your income sources and deductions:</p>
+                        <ul>
+                            <li><strong>New Regime</strong> (default): Lower rates but fewer deductions. Best if you don't have many investments or deductions.</li>
+                            <li><strong>Old Regime</strong>: Higher rates but more deductions (HRA, 80C, 80D, etc.). Better if you have significant deductions.</li>
+                        </ul>
+                        <p>Our calculator compares both automatically.</p>
+                    </div>
+                </div>
+            </div>
 
-<div class="card mt-4">
-    <div class="card-header bg-info text-white">
-        <h5>Need More Help?</h5>
-    </div>
-    <div class="card-body">
-        <p>Use the AI Assistant button at the bottom right of the screen to ask any tax-related questions.</p>
-        <p>For complex tax situations, we recommend consulting a qualified tax professional.</p>
+            <!-- Question 2 -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#q2">
+                        What documents do I need for filing ITR?
+                    </button>
+                </h2>
+                <div id="q2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <p>Essential documents include:</p>
+                        <ul>
+                            <li>Form 16 (for salaried individuals)</li>
+                            <li>Bank statements (for interest income)</li>
+                            <li>Investment proofs (80C, 80D, etc.)</li>
+                            <li>Rent receipts (if claiming HRA)</li>
+                            <li>Home loan interest certificate</li>
+                            <li>Capital gains statements (if applicable)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Questions... -->
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#q3">
+                        How can I reduce my tax liability?
+                    </button>
+                </h2>
+                <div id="q3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        <p>Common tax-saving options:</p>
+                        <ul>
+                            <li><strong>Section 80C:</strong> Invest up to ₹1.5L in PPF, ELSS, NSC, etc.</li>
+                            <li><strong>Section 80D:</strong> Health insurance premiums</li>
+                            <li><strong>HRA:</strong> House Rent Allowance exemption</li>
+                            <li><strong>Home Loan:</strong> Interest deduction under Section 24</li>
+                            <li><strong>NPS:</strong> Additional ₹50,000 under 80CCD(1B)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
