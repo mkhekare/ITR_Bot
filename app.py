@@ -48,24 +48,33 @@ class GSTProfile(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Routes
+# app.py
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/dashboard')
-@login_required
 def dashboard():
     return render_template('dashboard.html')
 
-# Tax Calculator Routes
-@app.route('/calculator', methods=['GET', 'POST'])
-@login_required
+@app.route('/calculator')
 def calculator():
+    return render_template('calculator.html')  # Not calculator/step1.html
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
     if request.method == 'POST':
-        # Process calculator form data
+        # Handle file upload
         pass
-    return render_template('calculator/step1.html')
+    return render_template('upload.html')
+
+@app.route('/results')
+def results():
+    return render_template('results.html')
+
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
 
 # GST Routes
 @app.route('/gst')
