@@ -58,6 +58,16 @@ def index():
 def dashboard():
     return render_template('dashboard.html')
 
+# Add this with your other routes
+@app.route('/upload', methods=['GET', 'POST'])
+@login_required
+def upload():
+    if request.method == 'POST':
+        # Handle file upload logic here
+        flash('Files uploaded successfully', 'success')
+        return redirect(url_for('dashboard'))
+    return render_template('upload.html')
+
 # Tax Calculator Routes
 @app.route('/calculator', methods=['GET', 'POST'])
 @login_required
