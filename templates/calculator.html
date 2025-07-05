@@ -1,117 +1,116 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4 class="mb-0"><i class="bi bi-calculator me-2"></i>Tax Calculator</h4>
-            </div>
-            <div class="card-body">
-                <ul class="nav nav-tabs mb-4" id="calculatorTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button">Basic Details</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="income-tab" data-bs-toggle="tab" data-bs-target="#income" type="button">Income Details</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="deductions-tab" data-bs-toggle="tab" data-bs-target="#deductions" type="button">Deductions</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="results-tab" data-bs-toggle="tab" data-bs-target="#results" type="button">Results</button>
-                    </li>
-                </ul>
-                
-                <div class="tab-content" id="calculatorTabsContent">
-                    <div class="tab-pane fade show active" id="basic" role="tabpanel">
-                        <h5 class="mb-3">Financial Year</h5>
-                        <div class="mb-4">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="financial_year" id="fy2025" value="2025-26" checked>
-                                <label class="form-check-label" for="fy2025">FY 2025-26 (AY 2026-27)</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="financial_year" id="fy2024" value="2024-25">
-                                <label class="form-check-label" for="fy2024">FY 2024-25 (AY 2025-26)</label>
-                            </div>
-                        </div>
-                        
-                        <h5 class="mb-3">Age Group</h5>
-                        <select class="form-select mb-4" name="age_group">
-                            <option value="below_60">Below 60 years</option>
-                            <option value="senior">60-80 years (Senior Citizen)</option>
-                            <option value="super_senior">Above 80 years (Super Senior Citizen)</option>
-                        </select>
-                        
-                        <div class="d-flex justify-content-end">
-                            <button class="btn btn-primary" onclick="nextTab('income-tab')">Next <i class="bi bi-arrow-right"></i></button>
-                        </div>
-                    </div>
-                    
-                    <div class="tab-pane fade" id="income" role="tabpanel">
-                        <!-- Income form fields here -->
-                        <button class="btn btn-secondary me-2" onclick="nextTab('basic-tab')"><i class="bi bi-arrow-left"></i> Back</button>
-                        <button class="btn btn-primary" onclick="nextTab('deductions-tab')">Next <i class="bi bi-arrow-right"></i></button>
-                    </div>
-                    
-                    <div class="tab-pane fade" id="deductions" role="tabpanel">
-                        <!-- Deductions form fields here -->
-                        <button class="btn btn-secondary me-2" onclick="nextTab('income-tab')"><i class="bi bi-arrow-left"></i> Back</button>
-                        <button class="btn btn-primary" onclick="nextTab('results-tab')">Calculate Tax</button>
-                    </div>
-                    
-                    <div class="tab-pane fade" id="results" role="tabpanel">
-                        <!-- Results display here -->
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4>Tax Calculator</h4>
     </div>
-    
-    <div class="col-lg-4">
-        <div class="card mb-4">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Budget 2025 Updates</h5>
+    <div class="card-body">
+        <ul class="nav nav-tabs mb-4" id="calculatorTabs">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#basic">Basic Details</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#income">Income Details</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#deductions">Deductions</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#results">Results</a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Basic Details Tab -->
+            <div class="tab-pane fade show active" id="basic">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">Financial Year</label>
+                        <select class="form-select">
+                            <option>2024-25</option>
+                            <option>2025-26</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Age Group</label>
+                        <select class="form-select">
+                            <option>Below 60 years</option>
+                            <option>60-80 years (Senior Citizen)</option>
+                            <option>Above 80 years (Super Senior Citizen)</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="nextTab('income')">Next</button>
+                </form>
             </div>
-            <div class="card-body">
+
+            <!-- Income Details Tab -->
+            <div class="tab-pane fade" id="income">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">Salary Income (₹)</label>
+                        <input type="number" class="form-control" placeholder="Annual salary">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Interest Income (₹)</label>
+                        <input type="number" class="form-control" placeholder="FD, savings interest">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rental Income (₹)</label>
+                        <input type="number" class="form-control" placeholder="From property">
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" onclick="prevTab('basic')">Back</button>
+                        <button type="button" class="btn btn-primary" onclick="nextTab('deductions')">Next</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Deductions Tab -->
+            <div class="tab-pane fade" id="deductions">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">Section 80C Investments (₹)</label>
+                        <input type="number" class="form-control" placeholder="PPF, ELSS etc.">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Medical Insurance (₹)</label>
+                        <input type="number" class="form-control" placeholder="Section 80D">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Home Loan Interest (₹)</label>
+                        <input type="number" class="form-control" placeholder="Section 24">
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" onclick="prevTab('income')">Back</button>
+                        <button type="button" class="btn btn-primary" onclick="nextTab('results')">Calculate</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Results Tab -->
+            <div class="tab-pane fade" id="results">
                 <div class="alert alert-info">
-                    <strong>No Tax up to ₹12 Lakhs</strong><br>
-                    Due to ₹60,000 rebate in new regime
+                    <h5>Tax Liability Summary</h5>
+                    <p>Old Regime: ₹45,200</p>
+                    <p>New Regime: ₹38,750</p>
+                    <p class="fw-bold">Recommended: New Regime (Save ₹6,450)</p>
                 </div>
-                <h6>New Tax Slabs:</h6>
-                <table class="table table-sm">
-                    <tr><td>Up to ₹4,00,000</td><td>0%</td></tr>
-                    <tr><td>₹4,00,001 - ₹8,00,000</td><td>5%</td></tr>
-                    <tr><td>₹8,00,001 - ₹12,00,000</td><td>10%</td></tr>
-                    <tr><td>₹12,00,001 - ₹16,00,000</td><td>15%</td></tr>
-                    <tr><td>₹16,00,001 - ₹20,00,000</td><td>20%</td></tr>
-                    <tr><td>₹20,00,001 - ₹24,00,000</td><td>25%</td></tr>
-                    <tr><td>Above ₹24,00,000</td><td>30%</td></tr>
-                </table>
-            </div>
-        </div>
-        
-        <div class="card">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Quick Tips</h5>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><i class="bi bi-check-circle text-success me-2"></i>Compare both regimes</li>
-                    <li class="list-group-item"><i class="bi bi-check-circle text-success me-2"></i>Invest before March 31</li>
-                    <li class="list-group-item"><i class="bi bi-check-circle text-success me-2"></i>Keep all documents ready</li>
-                </ul>
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-secondary" onclick="prevTab('deductions')">Back</button>
+                    <button class="btn btn-success">Save Calculation</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    function nextTab(tabId) {
-        const tab = document.getElementById(tabId);
-        const tabInstance = new bootstrap.Tab(tab);
-        tabInstance.show();
-    }
+function nextTab(tabId) {
+    $(`a[href="#${tabId}"]`).tab('show');
+}
+function prevTab(tabId) {
+    $(`a[href="#${tabId}"]`).tab('show');
+}
 </script>
 {% endblock %}
