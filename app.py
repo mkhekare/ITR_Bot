@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 import os
+from datetime import datetime
 from config import Config
 import google.generativeai as genai
 
-# Initialize Flask app
 app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = app.config['SECRET_KEY']
@@ -42,6 +42,43 @@ def analyze_document(filepath):
     except Exception as e:
         return f"Error analyzing document: {str(e)}"
 
+def generate_sample_data():
+    """Generate sample data for dashboard and results"""
+    return {
+        'username': 'Test User',
+        'salary_components': {
+            'basic salary': 800000,
+            'hra': 400000,
+            'special allowance': 200000,
+            'bonus': 100000
+        },
+        'deductions': {
+            '80c': 150000,
+            '80d': 25000,
+            'home loan interest': 200000,
+            'standard deduction': 50000
+        },
+        'tax_results': {
+            'recommended_regime': 'new',
+            'savings': 12500,
+            'old_regime': {
+                'taxable_income': 1200000,
+                'tax': 187500
+            },
+            'new_regime': {
+                'taxable_income': 1250000,
+                'tax': 175000
+            }
+        },
+        'documents': [
+            {
+                'filename': 'Form16.pdf',
+                'summary': 'Form 16 for FY 2023-24 showing total income and taxes deducted',
+                'content': '...extracted text from document...'
+            }
+        ]
+    }
+
 # Routes
 @app.route('/')
 def index():
@@ -50,9 +87,12 @@ def index():
 @app.route('/dashboard')
 def dashboard():
     try:
-        return render_template('dashboard.html', username="User")
+        data = generate_sample_data()
+        return render_template('dashboard.html', 
+                             current_user={'name': data['username']},
+                             **data)
     except Exception as e:
-        app.logger.error(f"Error rendering dashboard: {str(e)}")
+        app.logger.error(f"Dashboard error: {str(e)}")
         return render_template('500.html'), 500
 
 @app.route('/upload', methods=['GET', 'POST'])
@@ -79,13 +119,23 @@ def upload():
                 # Save the file
                 file.save(filepath)
                 
+                # Get form data
+                financial_year = request.form.get('financial_year', '2024-25')
+                age_group = request.form.get('age_group', 'below_60')
+                
                 # Analyze the document
                 analysis_result = analyze_document(filepath)
                 
-                # Render results
-                return render_template('results.html',
-                                    filename=filename,
-                                    result=analysis_result)
+                # Generate sample results data
+                results_data = generate_sample_data()
+                results_data.update({
+                    'filename': filename,
+                    'financial_year': financial_year,
+                    'age_group': age_group,
+                    'analysis_text': analysis_result
+                })
+                
+                return render_template('results.html', **results_data)
             
             except Exception as e:
                 flash(f'Error processing file: {str(e)}', 'error')
@@ -96,7 +146,12 @@ def upload():
     
     return render_template('upload.html')
 
-# Other routes (keep your existing implementations)
+@app.route('/analyze_documents', methods=['POST'])
+def analyze_documents():
+    """Alternative endpoint for form submission"""
+    return upload()
+
+# Other routes
 @app.route('/faq')
 def faq():
     return render_template('faq.html')
@@ -118,7 +173,8 @@ def calculator():
 
 @app.route('/results')
 def results():
-    return render_template('results.html')
+    data = generate_sample_data()
+    return render_template('results.html', **data)
 
 # Error handlers
 @app.errorhandler(404)
