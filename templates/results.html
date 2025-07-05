@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <h4>Tax Calculation Results</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        Old Tax Regime
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Taxable Income:</strong> ₹{{ "{:,.2f}".format(tax_results.old_regime.taxable_income) }}</p>
+                        <p><strong>Tax Liability:</strong> ₹{{ "{:,.2f}".format(tax_results.old_regime.tax) }}</p>
+                        <p><strong>Effective Rate:</strong> {{ "{:.2f}".format(tax_results.old_regime.effective_rate) }}%</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        New Tax Regime
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Taxable Income:</strong> ₹{{ "{:,.2f}".format(tax_results.new_regime.taxable_income) }}</p>
+                        <p><strong>Tax Liability:</strong> ₹{{ "{:,.2f}".format(tax_results.new_regime.tax) }}</p>
+                        <p><strong>Effective Rate:</strong> {{ "{:.2f}".format(tax_results.new_regime.effective_rate) }}%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-{{ 'success' if tax_results.recommended_regime == 'new' else 'warning' }} mt-3">
+            <h5>Recommendation</h5>
+            <p>The <strong>{{ tax_results.recommended_regime }} tax regime</strong> is better for you.</p>
+            <p>You could save ₹{{ "{:,.2f}".format(tax_results.savings) }} by choosing this regime.</p>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h4>Tax Optimization Tips</h4>
+    </div>
+    <div class="card-body">
+        <div class="optimization-tips">
+            {{ optimization_tips|safe }}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-info text-white">
+        <h4>Uploaded Document Analysis</h4>
+    </div>
+    <div class="card-body">
+        {% for doc in extracted_data.documents %}
+        <div class="mb-3 p-3 border rounded">
+            <h5>{{ doc.filename }}</h5>
+            <div class="mb-2">
+                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" 
+                    data-bs-target="#collapse{{ loop.index }}">
+                    View Analysis
+                </button>
+            </div>
+            <div class="collapse" id="collapse{{ loop.index }}">
+                <div class="card card-body">
+                    <h6>Summary:</h6>
+                    <p>{{ doc.summary }}</p>
+                    <h6 class="mt-2">Extracted Text (partial):</h6>
+                    <pre class="bg-light p-2">{{ doc.content }}</pre>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
