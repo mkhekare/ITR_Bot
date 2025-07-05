@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section text-center py-5 bg-light rounded">
+    <h1 class="display-4">AI-Powered Tax Assistant</h1>
+    <p class="lead">Upload your financial documents and let our AI analyze them for accurate tax calculations</p>
+    <a href="/upload" class="btn btn-primary btn-lg mt-3">Get Started</a>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-upload"></i> Document Upload</h5>
+                <p class="card-text">Upload salary slips, investment proofs, receipts and other financial documents.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-calculator"></i> Smart Analysis</h5>
+                <p class="card-text">Our AI extracts relevant information and calculates your tax liability.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-graph-up"></i> Optimization Tips</h5>
+                <p class="card-text">Get personalized recommendations to minimize your tax burden legally.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-5">
+    <h3>How It Works</h3>
+    <ol>
+        <li>Upload your financial documents (salary slips, Form 16, investment proofs, etc.)</li>
+        <li>Our AI analyzes the documents and extracts relevant financial information</li>
+        <li>We calculate your tax liability under both old and new regimes</li>
+        <li>Get personalized recommendations for tax savings</li>
+    </ol>
+</div>
+{% endblock %}
