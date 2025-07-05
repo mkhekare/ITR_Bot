@@ -25,6 +25,10 @@ def index():
 def dashboard():
     return render_template('dashboard.html')
 
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
+
 # Document Handling Routes
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
