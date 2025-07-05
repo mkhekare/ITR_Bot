@@ -2,20 +2,42 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 import os
 import logging
-from utils.document_processor import process_uploaded_file
-from utils.tax_calculator import calculate_tax
+import sys
+from pathlib import Path
 
 # Initialize Flask app
 app = Flask(__name__)
 
+# Configure absolute paths
+BASE_DIR = Path(__file__).parent.resolve()
+app.template_folder = str(BASE_DIR / 'templates')
+app.static_folder = str(BASE_DIR / 'static')
+
 # Basic configuration
 app.config['SECRET_KEY'] = 'dev-secret-key'
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['UPLOAD_FOLDER'] = str(BASE_DIR / 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Routes
+@app.route('/')
+def index():
+    try:
+        logger.info("Rendering index page")
+        return render_template('index.html')
+    except Exception as e:
+        logger.error(f"Error rendering index: {str(e)}")
+        return "Error loading home page", 500
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    if request.method == 'POST':
+        # Handle file upload
+        pass
+    return render_template('upload.html')
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'txt'}
