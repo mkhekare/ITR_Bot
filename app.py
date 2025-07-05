@@ -13,32 +13,34 @@ app.secret_key = app.config['SECRET_KEY']
 genai.configure(api_key=app.config['GEMINI_API_KEY'])
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Helper Functions
+# Configure upload folder
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-def process_uploaded_file(file):
-    """Process the uploaded file and return analysis results"""
+def analyze_document(filepath):
+    """Analyze the document using Gemini AI"""
     try:
         # For text files
-        if file.filename.lower().endswith('.txt'):
-            text = file.read().decode('utf-8')
-        
-        # For other files (PDF, images), you'll need additional libraries
-        # This is a placeholder - implement your actual processing
+        if filepath.lower().endswith('.txt'):
+            with open(filepath, 'r') as f:
+                content = f.read()
         else:
-            text = f"File content analysis for {file.filename}"
+            # For other file types (implement your specific processing)
+            content = f"Contents of {os.path.basename(filepath)}"
         
-        # Analyze with Gemini
         prompt = f"""Analyze this document for tax-related information:
-        {text}
+        {content}
         Provide key findings and recommendations:"""
         
         response = model.generate_content(prompt)
         return response.text
     
     except Exception as e:
-        return f"Error processing file: {str(e)}"
+        return f"Error analyzing document: {str(e)}"
 
 # Routes
 @app.route('/')
@@ -47,35 +49,54 @@ def index():
 
 @app.route('/dashboard')
 def dashboard():
-    return render_template('dashboard.html', username="User")
+    try:
+        return render_template('dashboard.html', username="User")
+    except Exception as e:
+        app.logger.error(f"Error rendering dashboard: {str(e)}")
+        return render_template('500.html'), 500
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if request.method == 'POST':
+        # Check if file was uploaded
         if 'file' not in request.files:
-            flash('No file selected')
+            flash('No file selected', 'error')
             return redirect(request.url)
         
         file = request.files['file']
+        
+        # Check if filename is empty
         if file.filename == '':
-            flash('No file selected')
+            flash('No file selected', 'error')
             return redirect(request.url)
-            
+        
+        # Validate file type
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             
-            # Process file directly without saving
-            analysis_result = process_uploaded_file(file)
+            try:
+                # Save the file
+                file.save(filepath)
+                
+                # Analyze the document
+                analysis_result = analyze_document(filepath)
+                
+                # Render results
+                return render_template('results.html',
+                                    filename=filename,
+                                    result=analysis_result)
             
-            return render_template('results.html',
-                                filename=filename,
-                                result=analysis_result)
+            except Exception as e:
+                flash(f'Error processing file: {str(e)}', 'error')
+                return redirect(request.url)
         
-        flash('Invalid file type. Allowed types: ' + ', '.join(app.config['ALLOWED_EXTENSIONS']))
+        flash('Invalid file type. Allowed types: ' + ', '.join(app.config['ALLOWED_EXTENSIONS']), 'error')
         return redirect(request.url)
     
     return render_template('upload.html')
 
+# Other routes (keep your existing implementations)
 @app.route('/faq')
 def faq():
     return render_template('faq.html')
@@ -91,8 +112,7 @@ def investments():
 @app.route('/calculator', methods=['GET', 'POST'])
 def calculator():
     if request.method == 'POST':
-        # Process form data
-        flash('Calculation complete')
+        flash('Calculation complete', 'success')
         return redirect(url_for('results'))
     return render_template('calculator.html')
 
@@ -100,7 +120,7 @@ def calculator():
 def results():
     return render_template('results.html')
 
-# Error Handlers
+# Error handlers
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
@@ -110,7 +130,4 @@ def internal_error(e):
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
-    # Create upload directory if configured
-    if hasattr(app.config, 'UPLOAD_FOLDER'):
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=7860, debug=True)
