@@ -122,6 +122,56 @@ def ask_gemini():
     except Exception as e:
         return {"error": str(e)}, 500
 
+@app.route('/analyze_documents', methods=['GET', 'POST'])
+def analyze_documents():
+    if request.method == 'POST':
+        # Handle file from direct form submission
+        if 'file' not in request.files:
+            flash('No file selected')
+            return redirect(url_for('upload'))
+            
+        file = request.files['file']
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(url_for('upload'))
+            
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            upload_folder = os.path.join(app.root_path, 'uploads')
+            os.makedirs(upload_folder, exist_ok=True)
+            filepath = os.path.join(upload_folder, filename)
+            file.save(filepath)
+            
+            # Process the file immediately for POST requests
+            analysis_result = process_document(filepath)  # Implement your processing function
+            return render_template('results.html', 
+                                filename=filename,
+                                result=analysis_result)
+    
+    # Handle GET requests (from upload route redirect)
+    filename = request.args.get('filename')
+    if not filename:
+        flash('No file to analyze')
+        return redirect(url_for('upload'))
+    
+    try:
+        filepath = os.path.join(app.root_path, 'uploads', filename)
+        analysis_result = process_document(filepath)  # Implement your processing function
+        return render_template('results.html', 
+                            filename=filename,
+                            result=analysis_result)
+    except Exception as e:
+        flash(f'Analysis error: {str(e)}')
+        return redirect(url_for('upload'))
+
+def process_document(filepath):
+    """Example processing function - replace with your actual logic"""
+    # Here you would implement:
+    # 1. Document text extraction
+    # 2. Analysis using your AI model
+    # 3. Return formatted results
+    return "Sample analysis of " + os.path.basename(filepath)
+
 # Error Handlers
 @app.errorhandler(404)
 def page_not_found(e):
